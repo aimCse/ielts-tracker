@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IELTS Full Test Tracker — Band 9.0 Challenge Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #0d1b2a;
+  --navy2: #1a2f45;
+  --gold: #e8a020;
+  --gold2: #ffc84a;
+  --cream: #f9f5ee;
+  --cream2: #f2ebe0;
+  --teal: #1D9E75;
+  --teal-l: #d0f0e5;
+  --blue: #2176c7;
+  --blue-l: #dceeff;
+  --purple: #5b4ab8;
+  --purple-l: #eeeaff;
+  --coral: #d85a30;
+  --coral-l: #fde8df;
+  --text: #0d1b2a;
+  --text2: #4a5568;
+  --text3: #8a97a8;
+  --border: rgba(13,27,42,0.12);
+  --border2: rgba(13,27,42,0.06);
+  --white: #ffffff;
+  --shadow: 0 4px 24px rgba(13,27,42,0.10);
+  --shadow-sm: 0 2px 8px rgba(13,27,42,0.07);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ─── AUTH SCREEN OVERLAY ─── */
+#auth-screen {
+  position: fixed; inset: 0; background: var(--navy); z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+}
+.auth-card {
+  background: var(--white); padding: 2.5rem; border-radius: 20px;
+  width: 100%; max-width: 420px; box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  text-align: center;
+}
+.auth-card h2 { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--navy); margin-bottom: 0.5rem; }
+.auth-card p { color: var(--text2); font-size: 14px; margin-bottom: 2rem; }
+.auth-field { display: flex; flex-direction: column; gap: 6px; text-align: left; margin-bottom: 1.25rem; }
+.auth-field label { font-size: 11px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text2); }
+.auth-field input { padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--cream); outline: none; }
+.auth-field input:focus { border-color: var(--gold); background: #fff; }
+.auth-btn { width: 100%; padding: 13px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: all 0.2s; box-shadow: 0 4px 14px rgba(232,160,32,0.3); }
+.auth-btn:hover { background: var(--gold2); transform: translateY(-1px); }
+.auth-error { color: var(--coral); font-size: 13px; margin-top: 1rem; background: var(--coral-l); padding: 8px; border-radius: 6px; display: none; }
+
+/* ─── NAVBAR ─── */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem;
+  height: 60px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-logo-badge {
+  width: 36px; height: 36px; background: var(--gold); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 13px; color: var(--navy); font-weight: 900; letter-spacing: -0.5px;
+}
+.nav-logo-text { color: #fff; font-size: 15px; font-weight: 500; letter-spacing: 0.3px; }
+.nav-logo-text span { color: var(--gold2); }
+.nav-links { display: flex; gap: 4px; align-items: center; }
+.nav-link {
+  color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer;
+  transition: all 0.15s; border: none; background: none;
+  text-decoration: none;
+}
+.nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-link.active { color: var(--gold2); background: rgba(232,160,32,0.12); }
+
+/* ─── HERO ─── */
+.hero {
+  background: var(--navy);
+  padding: 5rem 2.5rem 4rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(232,160,32,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 30%, rgba(29,158,117,0.07) 0%, transparent 70%);
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(232,160,32,0.15); color: var(--gold2);
+  font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 6px 16px; border-radius: 20px;
+  border: 1px solid rgba(232,160,32,0.25);
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  color: #fff; line-height: 1.15;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.hero h1 em { color: var(--gold2); font-style: italic; }
+.hero-sub {
+  font-size: 17px; color: rgba(255,255,255,0.6);
+  max-width: 520px; margin: 0 auto 2.5rem;
+  position: relative;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--gold); color: var(--navy);
+  font-size: 15px; font-weight: 600;
+  padding: 13px 28px; border-radius: 10px;
+  text-decoration: none; border: none; cursor: pointer;
+  transition: all 0.2s; position: relative;
+  box-shadow: 0 4px 20px rgba(232,160,32,0.4);
+}
+.hero-cta:hover { background: var(--gold2); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,160,32,0.45); }
+.hero-stats {
+  display: flex; justify-content: center; gap: 3rem;
+  margin-top: 3.5rem; padding-top: 2.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+}
+.hero-stat-val { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--gold2); }
+.hero-stat-label { font-size: 12px; color: rgba(255,255,255,0.45); letter-spacing: 0.5px; margin-top: 2px; }
+
+/* ─── MAIN LAYOUT ─── */
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+/* ─── MODULE TABS ─── */
+.module-tabs {
+  display: flex; gap: 6px; margin-bottom: 1.5rem;
+  background: var(--white);
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+.mtab {
+  flex: 1; min-width: 130px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: var(--text2); background: transparent;
+  transition: all 0.18s;
+}
+.mtab:hover { background: var(--cream2); color: var(--text); }
+.mtab.active { color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+.mtab[data-m="listening"].active { background: var(--teal); }
+.mtab[data-m="reading"].active { background: var(--blue); }
+.mtab[data-m="writing"].active { background: var(--purple); }
+.mtab[data-m="speaking"].active { background: var(--coral); }
+.mtab[data-m="dashboard"].active { background: var(--navy); }
+.mtab-icon { font-size: 16px; }
+
+/* ─── PANELS ─── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── STATS ROW ─── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin-bottom: 1.5rem;
+}
+.scard {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.scard-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.scard-val { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); line-height: 1; }
+.scard-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* ─── ADD FORM ─── */
+.add-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.add-card-title {
+  font-size: 12px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+}
+.add-card-title::before {
+  content: ''; display: inline-block; width: 18px; height: 3px;
+  border-radius: 2px;
+}
+.add-card[data-m="listening"] .add-card-title::before { background: var(--teal); }
+.add-card[data-m="reading"] .add-card-title::before { background: var(--blue); }
+.add-card[data-m="writing"] .add-card-title::before { background: var(--purple); }
+.add-card[data-m="speaking"] .add-card-title::before { background: var(--coral); }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--text2);
+}
+.fg input, .fg select {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text);
+  background: var(--cream);
+  outline: none; transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.fg input:focus, .fg select:focus { border-color: var(--gold); background: var(--white); }
+.btn-add {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border-radius: 8px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  color: var(--white);
+}
+.add-card[data-m="listening"] .btn-add { background: var(--teal); }
+.add-card[data-m="reading"] .btn-add { background: var(--blue); }
+.add-card[data-m="writing"] .btn-add { background: var(--purple); }
+.add-card[data-m="speaking"] .btn-add { background: var(--coral); }
+.btn-add:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* ─── TABLE ─── */
+.table-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--navy); }
+thead th {
+  padding: 11px 12px; text-align: left;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.7px;
+  text-transform: uppercase; color: rgba(255,255,255,0.75);
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--border2); transition: background 0.1s; }
+tbody tr:hover { background: var(--cream2); }
+tbody tr:last-child { border-bottom: none; }
+tbody td {
+  padding: 10px 12px; color: var(--text);
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+}
+.b8 { background: #d0f0e5; color: #0a5c3e; }
+.b75 { background: #d0f0e5; color: #0a5c3e; }
+.b7 { background: #dceeff; color: #0e4d8a; }
+.b65 { background: #dceeff; color: #0e4d8a; }
+.b6 { background: #fff0c8; color: #7a4d00; }
+.blow { background: #fde8df; color: #8c2e10; }
+.acc-h { color: var(--teal); font-weight: 600; }
+.acc-m { color: var(--blue); font-weight: 600; }
+.acc-l { color: var(--coral); font-weight: 600; }
+.del-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 15px; padding: 4px 6px;
+  border-radius: 6px; transition: all 0.15s;
+}
+.del-btn:hover { color: var(--coral); background: var(--coral-l); }
+.no-data {
+  padding: 3rem 1rem; text-align: center;
+  color: var(--text3); font-size: 14px;
+}
+.no-data-icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.4; }
+
+/* ─── DASHBOARD ─── */
+.dash-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px; margin-bottom: 1.5rem;
+}
+.dash-module-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}
+.dash-module-card::after {
+  content: ''; position: absolute; right: -20px; top: -20px;
+  width: 80px; height: 80px; border-radius: 50%;
+  opacity: 0.06;
+}
+.dash-module-card[data-m="listening"]::after { background: var(--teal); }
+.dash-module-card[data-m="reading"]::after { background: var(--blue); }
+.dash-module-card[data-m="writing"]::after { background: var(--purple); }
+.dash-module-card[data-m="speaking"]::after { background: var(--coral); }
+.dmcard-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.dmcard-label { font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text3); }
+.dmcard-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.dash-module-card[data-m="listening"] .dmcard-icon { background: var(--teal-l); color: var(--teal); }
+.dash-module-card[data-m="reading"] .dmcard-icon { background: var(--blue-l); color: var(--blue); }
+.dash-module-card[data-m="writing"] .dmcard-icon { background: var(--purple-l); color: var(--purple); }
+.dash-module-card[data-m="speaking"] .dmcard-icon { background: var(--coral-l); color: var(--coral); }
+.dmcard-band { font-family: 'DM Serif Display', serif; font-size: 2.5rem; line-height: 1; margin-bottom: 4px; }
+.dash-module-card[data-m="listening"] .dmcard-band { color: var(--teal); }
+.dash-module-card[data-m="reading"] .dmcard-band { color: var(--blue); }
+.dash-module-card[data-m="writing"] .dmcard-band { color: var(--purple); }
+.dash-module-card[data-m="speaking"] .dmcard-band { color: var(--coral); }
+.dmcard-meta { font-size: 12px; color: var(--text3); }
+.progress-bar-bg { height: 5px; background: var(--cream2); border-radius: 3px; margin-top: 12px; overflow: hidden; }
+.progress-bar-fill { height: 5px; border-radius: 3px; transition: width 0.5s ease; }
+.dash-module-card[data-m="listening"] .progress-bar-fill { background: var(--teal); }
+.dash-module-card[data-m="reading"] .progress-bar-fill { background: var(--blue); }
+.dash-module-card[data-m="writing"] .progress-bar-fill { background: var(--purple); }
+.dash-module-card[data-m="speaking"] .progress-bar-fill { background: var(--coral); }
+
+.overall-card {
+  background: var(--navy);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(13,27,42,0.2);
+  flex-wrap: wrap; gap: 1rem;
+}
+.overall-left .label { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.overall-band { font-family: 'DM Serif Display', serif; font-size: 4rem; color: var(--gold2); line-height: 1; }
+.overall-sub { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+.target-pill {
+  background: rgba(232,160,32,0.15);
+  border: 1px solid rgba(232,160,32,0.3);
+  border-radius: 12px; padding: 1rem 1.5rem; text-align: center;
+}
+.target-pill .t-label { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.target-pill .t-val { font-family: 'DM Serif Display', serif; font-size: 2.5rem; color: var(--gold2); }
+.target-pill .t-gap { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+.recent-section { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1.5rem; box-shadow: var(--shadow-sm); }
+.section-title { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); margin-bottom: 1rem; }
+.recent-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--border2);
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.recent-label { flex: 1; font-size: 13px; color: var(--text); }
+.recent-date { font-size: 12px; color: var(--text3); }
+
+/* ─── FOOTER ─── */
+footer {
+  background: var(--navy); color: rgba(255,255,255,0.4);
+  text-align: center; padding: 1.5rem;
+  font-size: 12px; letter-spacing: 0.3px;
+}
+footer strong { color: var(--gold2); }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.panel.active { animation: fadeUp 0.25s ease; }
+.hero > * { animation: fadeUp 0.5s ease both; }
+.hero-eyebrow { animation-delay: 0.05s; }
+.hero h1 { animation-delay: 0.12s; }
+.hero-sub { animation-delay: 0.18s; }
+.hero-cta { animation-delay: 0.24s; }
+.hero-stats { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <h2>Welcome Back, Mohsin</h2>
+    <p>Log in to securely sync your Band 9.0 tracker to the cloud.</p>
+    <div class="auth-field">
+      <label>Email Address</label>
+      <input type="email" id="auth-email" placeholder="you@example.com">
+    </div>
+    <div class="auth-field" style="margin-bottom: 1.5rem;">
+      <label>Password</label>
+      <input type="password" id="auth-password" placeholder="••••••••">
+    </div>
+    <button class="auth-btn" onclick="handleLogin()">Log Into Tracker</button>
+    <div id="auth-error" class="auth-error"></div>
+  </div>
+</div>
+
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="nav-logo-badge">IELTS</div>
+    <div class="nav-logo-text">Band <span>9.0</span> Tracker</div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#tracker" onclick="showHero(false)">Tracker</a>
+    <a class="nav-link" href="#hero" onclick="showHero(true)">Home</a>
+    <button class="nav-link" onclick="handleLogout()" style="cursor:pointer; opacity:0.75;">Logout</button>
+  </div>
+</nav>
+
+<section class="hero" id="hero">
+  <div class="hero-eyebrow">🎯 60-Day Band 9.0 Challenge</div>
+  <h1>Your IELTS Journey<br>Tracked with <em>Precision</em></h1>
+  <p class="hero-sub">Log every test. Spot every weakness. Hit your target band. All four modules — in one place.</p>
+  <a class="hero-cta" href="#tracker" onclick="showHero(false)">
+    ▶ Open My Tracker
+  </a>
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-val">4</div>
+      <div class="hero-stat-label">Modules Tracked</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">9.0</div>
+      <div class="hero-stat-label">Target Band</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">60</div>
+      <div class="hero-stat-label">Day Challenge</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">Auto</div>
+      <div class="hero-stat-label">Band Calculation</div>
+    </div>
+  </div>
+</section>
+
+<main class="page" id="tracker">
+
+  <div class="module-tabs">
+    <button class="mtab active" data-m="listening" onclick="switchTab('listening')">
+      <span class="mtab-icon">🎧</span> Listening 
+    </button>
+    <button class="mtab" data-m="reading" onclick="switchTab('reading')">
+      <span class="mtab-icon">📖</span> Reading
+    </button>
+    <button class="mtab" data-m="writing" onclick="switchTab('writing')">
+      <span class="mtab-icon">✍️</span> Writing
+    </button>
+    <button class="mtab" data-m="speaking" onclick="switchTab('speaking')">
+      <span class="mtab-icon">🎙️</span> Speaking
+    </button>
+    <button class="mtab" data-m="dashboard" onclick="switchTab('dashboard')"> 
+      <span class="mtab-icon">📊</span> Overview
+    </button> 
+  </div>
+
+  <div class="panel active" id="panel-listening">
+    <div class="stats-row" id="l-stats"></div>
+    <div class="add-card" data-m="listening">
+      <div class="add-card-title">Add Listening Test</div>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="l-date"></div>
+        <div class="fg"><label>Material</label><input type="text" id="l-mat" placeholder="Cambridge 15"></div>
+        <div class="fg"><label>Test No.</label><input type="text" id="l-test" placeholder="Test 1"></div>
+        <div class="fg"><label>Part 1 /10</label><input type="number" id="l-p1" min="0" max="10" placeholder="0"></div>
+        <div class="fg"><label>Part 2 /10</label><input type="number" id="l-p2" min="0" max="10" placeholder="0"></div>
+        <div class="fg"><label>Part 3 /10</label><input type="number" id="l-p3" min="0" max="10" placeholder="0"></div>
+        <div class="fg"><label>Part 4 /10</label><input type="number" id="l-p4" min="0" max="10" placeholder="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Problem Type</label>
+          <select id="l-prob">
+            <option value="">Select...</option>
+            <option>Multiple Choice (MCQ)</option>
+            <option>Matching (Name, Place, Heading, Info)</option>
+            <option>Plan/Map/Diagram Labeling</option>
+            <option>Form, Note, Table, Flow-Chart</option>
+            <option>Sentence Completion</option>
+            <option>Other Type</option>
+          </select>
+        </div>
+        <div class="fg"><label>Weak Area</label>
+          <select id="l-weak">
+            <option value="">Select...</option>
+            <option>Numbers</option>
+            <option>Distractor</option>
+            <option>Fast Audio</option>
+            <option>Less Concentration</option>
+            <option>Spelling</option>
+            <option>Others</option>
+          </select>
+        </div>
+        <div class="fg"><label>Notes</label><input type="text" id="l-notes" placeholder="Any comments..."></div>
+      </div>
+      <button class="btn-add" onclick="addListening()">+ Add Entry</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Date</th><th>Material</th><th>Test</th>
+            <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+            <th>Total</th><th>Accuracy</th><th>Band</th>
+            <th>Problem</th><th>Weak Area</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="l-tbody"></tbody>
+        </table>
+        <div id="l-empty" class="no-data"><div class="no-data-icon">📋</div>No tests yet. Add your first entry above.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-reading">
+    <div class="stats-row" id="r-stats"></div>
+    <div class="add-card" data-m="reading">
+      <div class="add-card-title">Add Reading Test</div>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="r-date"></div>
+        <div class="fg"><label>Material</label><input type="text" id="r-mat" placeholder="Cambridge 17"></div>
+        <div class="fg"><label>Test No.</label><input type="text" id="r-test" placeholder="Test 4"></div>
+        <div class="fg"><label>Passage 1 /14</label><input type="number" id="r-p1" min="0" max="14" placeholder="0"></div>
+        <div class="fg"><label>Passage 2 /13</label><input type="number" id="r-p2" min="0" max="13" placeholder="0"></div>
+        <div class="fg"><label>Passage 3 /13</label><input type="number" id="r-p3" min="0" max="13" placeholder="0"></div>
+        <div class="fg"><label>Time Taken</label><input type="text" id="r-time" placeholder="1 hour"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Weak Question Type</label>
+          <select id="r-weak">
+            <option value="">Select...</option>
+            <option>True/False/Not Given</option>
+            <option>Yes/No/Not Given</option>
+            <option>Matching Headings</option>
+            <option>Matching Information</option>
+            <option>Sentence Completion</option>
+            <option>Summary Completion</option>
+            <option>Multiple Choice</option>
+            <option>Matching Sentence Endings</option>
+            <option>Short Answer</option>
+            <option>Diagram Labeling</option>
+            <option>Time Management</option>
+            <option>Careless Mistake</option>
+          </select>
+        </div>
+        <div class="fg"><label>Notes</label><input type="text" id="r-notes" placeholder="Any comments..."></div>
+      </div>
+      <button class="btn-add" onclick="addReading()">+ Add Entry</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Date</th><th>Material</th><th>Test</th>
+            <th>P1</th><th>P2</th><th>P3</th><th>Total</th>
+            <th>Accuracy</th><th>Band</th><th>Time</th>
+            <th>Weak Area</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="r-tbody"></tbody>
+        </table>
+        <div id="r-empty" class="no-data"><div class="no-data-icon">📋</div>No tests yet. Add your first entry above.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-writing">
+    <div class="stats-row" id="w-stats"></div>
+    <div class="add-card" data-m="writing">
+      <div class="add-card-title">Add Writing Practice</div>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="w-date"></div>
+        <div class="fg"><label>Material</label><input type="text" id="w-mat" placeholder="Cambridge 15"></div>
+        <div class="fg"><label>Task Type</label>
+          <select id="w-task">
+            <option>Task 1</option><option>Task 2</option><option>Full Test (T1+T2)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Task 1 Band</label><input type="number" id="w-t1" min="0" max="9" step="0.5" placeholder="0"></div>
+        <div class="fg"><label>Task 2 Band</label><input type="number" id="w-t2" min="0" max="9" step="0.5" placeholder="0"></div>
+        <div class="fg"><label>Time Taken</label><input type="text" id="w-time" placeholder="60 min"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>TA/TR Issue</label>
+          <select id="w-ta"><option value="">None</option><option>Off-topic</option><option>Insufficient detail</option><option>Wrong format</option><option>Missing overview</option><option>Poor argument</option></select>
+        </div>
+        <div class="fg"><label>CC Issue</label>
+          <select id="w-cc"><option value="">None</option><option>Poor cohesion</option><option>Overused connectors</option><option>Unclear paragraphing</option><option>No topic sentences</option></select>
+        </div>
+        <div class="fg"><label>LR Issue</label>
+          <select id="w-lr"><option value="">None</option><option>Limited vocab range</option><option>Wrong word form</option><option>Spelling errors</option><option>Collocations</option></select>
+        </div>
+        <div class="fg"><label>GR Issue</label>
+          <select id="w-gr"><option value="">None</option><option>Limited sentence range</option><option>Tense errors</option><option>Article errors</option><option>Punctuation</option></select>
+        </div>
+        <div class="fg"><label>Notes</label><input type="text" id="w-notes" placeholder="Any comments..."></div>
+      </div>
+      <button class="btn-add" onclick="addWriting()">+ Add Entry</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Date</th><th>Material</th><th>Task</th>
+            <th>T1 Band</th><th>T2 Band</th><th>Avg Band</th><th>Time</th>
+            <th>TA/TR</th><th>CC</th><th>LR</th><th>GR</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="w-tbody"></tbody>
+        </table>
+        <div id="w-empty" class="no-data"><div class="no-data-icon">📋</div>No sessions yet. Add your first entry above.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-speaking">
+    <div class="stats-row" id="s-stats"></div>
+    <div class="add-card" data-m="speaking">
+      <div class="add-card-title">Add Speaking Practice</div>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="s-date"></div>
+        <div class="fg"><label>Practice Type</label>
+          <select id="s-type">
+            <option>Full Mock Test</option><option>Part 1 Only</option>
+            <option>Part 2 Only</option><option>Part 3 Only</option>
+            <option>Part 1 + 2</option><option>Part 2 + 3</option>
+          </select>
+        </div>
+        <div class="fg"><label>Part 1 Band</label><input type="number" id="s-p1" min="0" max="9" step="0.5" placeholder="0"></div>
+        <div class="fg"><label>Part 2 Band</label><input type="number" id="s-p2" min="0" max="9" step="0.5" placeholder="0"></div>
+        <div class="fg"><label>Part 3 Band</label><input type="number" id="s-p3" min="0" max="9" step="0.5" placeholder="0"></div>
+        <div class="fg"><label>Topic</label><input type="text" id="s-topic" placeholder="Technology, Travel..."></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Fluency Issue</label>
+          <select id="s-flu"><option value="">None</option><option>Too many pauses</option><option>Repetition</option><option>Slow speech rate</option><option>Fillers overused</option></select>
+        </div>
+        <div class="fg"><label>Vocabulary Issue</label>
+          <select id="s-voc"><option value="">None</option><option>Limited range</option><option>Wrong word choice</option><option>No idiomatic language</option><option>Repetition of words</option></select>
+        </div>
+        <div class="fg"><label>Grammar Issue</label>
+          <select id="s-grm"><option value="">None</option><option>Tense errors</option><option>Article errors</option><option>Limited complexity</option><option>Preposition errors</option></select>
+        </div>
+        <div class="fg"><label>Pronunciation</label>
+          <select id="s-pro"><option value="">Good</option><option>Word stress errors</option><option>Sentence stress errors</option><option>Intonation flat</option><option>Sounds unclear</option></select>
+        </div>
+        <div class="fg"><label>Notes</label><input type="text" id="s-notes" placeholder="Any comments..."></div>
+      </div>
+      <button class="btn-add" onclick="addSpeaking()">+ Add Entry</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Date</th><th>Type</th><th>Topic</th>
+            <th>P1</th><th>P2</th><th>P3</th><th>Avg Band</th>
+            <th>Fluency</th><th>Vocab</th><th>Grammar</th><th>Pronunciation</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="s-tbody"></tbody>
+        </table>
+        <div id="s-empty" class="no-data"><div class="no-data-icon">📋</div>No sessions yet. Add your first entry above.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-dashboard">
+    <div id="dash-content"></div>
+  </div>
+
+</main>
+
+<footer>
+  <p>IELTS Full Test Tracker &nbsp;·&nbsp; Built for <strong>Mohsin</strong> &nbsp;·&nbsp; Band <strong>9.0</strong> Target &nbsp;·&nbsp; Data saved securely in Cloud Architecture</p>
+</footer>
+
+<script>
+// ─── CLOUD BACKEND INITIALIZATION ───
+const SUPABASE_URL = "YOUR_SUPABASE_URL"; 
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let DATA = { listening:[], reading:[], writing:[], speaking:[] };
+let currentUser = null;
+
+// Track Auth Changes Live
+_supabase.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    currentUser = session.user;
+    document.getElementById('auth-screen').style.display = 'none';
+    loadCloudData();
+  } else {
+    currentUser = null;
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+});
+
+// Secure Login Engine
+async function handleLogin() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const errorEl = document.getElementById('auth-error');
+  errorEl.style.display = 'none';
+  
+  const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+  
+  if (error) {
+    errorEl.textContent = error.message;
+    errorEl.style.display = 'block';
+  }
+}
+
+// User Logout Trigger
+async function handleLogout() {
+  await _supabase.auth.signOut();
+}
+
+// Fetch Data For This User Forever From Cloud
+async function loadCloudData() {
+  const { data, error } = await _supabase
+    .from('user_trackers')
+    .select('data')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+    
+  if (data && data.data) {
+    DATA = data.data;
+  } else {
+    DATA = { listening:[], reading:[], writing:[], speaking:[] };
+  }
+  refreshAllUIPanels();
+}
+
+// Push Data Sync to Cloud
+async function save() {
+  if (!currentUser) return;
+  const { error } = await _supabase
+    .from('user_trackers')
+    .upsert({ user_id: currentUser.id, data: DATA }, { onConflict: 'user_id' });
+    
+  if (error) console.error("Synchronization breakdown:", error);
+}
+
+function refreshAllUIPanels() {
+  renderListening(); renderReading(); renderWriting(); renderSpeaking();
+  if(document.getElementById('panel-dashboard').classList.contains('active')) renderDash();
+}
+
+// ─── BAND CALC ───
+function lBand(n) {
+  if(n>=39) return 9; if(n>=37) return 8.5; if(n>=35) return 8;
+  if(n>=32) return 7.5; if(n>=30) return 7; if(n>=26) return 6.5;
+  if(n>=23) return 6; if(n>=18) return 5.5; if(n>=16) return 5;
+  if(n>=13) return 4.5; if(n>=10) return 4; return 3.5;
+}
+function rBand(n) {
+  if(n>=39) return 9; if(n>=37) return 8.5; if(n>=35) return 8;
+  if(n>=33) return 7.5; if(n>=30) return 7; if(n>=27) return 6.5;
+  if(n>=23) return 6; if(n>=19) return 5.5; if(n>=15) return 5;
+  if(n>=13) return 4.5; if(n>=10) return 4; return 3.5;
+}
+function bandCls(b) {
+  if(b>=8) return 'b8'; if(b>=7.5) return 'b75';
+  if(b>=7) return 'b7'; if(b>=6.5) return 'b65';
+  if(b>=6) return 'b6'; return 'blow';
+}
+function accCls(a) { return a>=80?'acc-h':a>=65?'acc-m':'acc-l'; }
+
+// ─── TABS ───
+function showHero(show) {
+  document.getElementById('hero').style.display = show ? '' : 'none';
+}
+function switchTab(t) {
+  document.querySelectorAll('.mtab').forEach(el => el.classList.toggle('active', el.dataset.m===t));
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='dashboard') renderDash();
+  document.getElementById('tracker').scrollIntoView({behavior:'smooth'});
+}
+
+// ─── RENDER STATS ───
+function renderStats(id, rows, bandKey) {
+  const best = rows.length ? Math.max(...rows.map(r=>r[bandKey]||0)) : '—';
+  const avgB = rows.length ? (rows.reduce((a,r)=>a+(r[bandKey]||0),0)/rows.length).toFixed(1) : '—';
+  const avgA = (rows.length && rows[0].acc!==undefined) ? Math.round(rows.reduce((a,r)=>a+r.acc,0)/rows.length)+'%' : null;
+  const last = rows.length ? rows[rows.length-1][bandKey] : '—';
+  let html = `
+    <div class="scard"><div class="scard-label">Best Band</div><div class="scard-val">${best}</div><div class="scard-sub">highest ever</div></div>
+    <div class="scard"><div class="scard-label">Avg Band</div><div class="scard-val">${avgB}</div><div class="scard-sub">running average</div></div>`;
+  if(avgA) html += `<div class="scard"><div class="scard-label">Avg Accuracy</div><div class="scard-val">${avgA}</div><div class="scard-sub">overall</div></div>`;
+  html += `
+    <div class="scard"><div class="scard-label">Sessions</div><div class="scard-val">${rows.length}</div><div class="scard-sub">completed</div></div>
+    <div class="scard"><div class="scard-label">Last Band</div><div class="scard-val">${last}</div><div class="scard-sub">most recent</div></div>`;
+  document.getElementById(id).innerHTML = html;
+}
+
+// ─── LISTENING ───
+function addListening() {
+  const p1=+document.getElementById('l-p1').value||0,
+        p2=+document.getElementById('l-p2').value||0,
+        p3=+document.getElementById('l-p3').value||0,
+        p4=+document.getElementById('l-p4').value||0;
+  const total=p1+p2+p3+p4, acc=Math.round(total/40*100), band=lBand(total);
+  DATA.listening.push({
+    date: document.getElementById('l-date').value || todayStr(),
+    mat: document.getElementById('l-mat').value||'—',
+    test: document.getElementById('l-test').value||'—',
+    p1,p2,p3,p4,total,acc,band,
+    prob: document.getElementById('l-prob').value||'—',
+    weak: document.getElementById('l-weak').value||'—',
+    notes: document.getElementById('l-notes').value||''
+  });
+  save(); renderListening();
+  ['l-mat','l-test','l-p1','l-p2','l-p3','l-p4','l-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('l-prob').value=''; document.getElementById('l-weak').value='';
+}
+function delListening(i){DATA.listening.splice(i,1);save();renderListening();}
+function renderListening() {
+  const rows=DATA.listening;
+  renderStats('l-stats', rows, 'band');
+  document.getElementById('l-empty').style.display = rows.length?'none':'block';
+  document.getElementById('l-tbody').innerHTML = rows.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.date}</td><td>${r.mat}</td><td>${r.test}</td>
+    <td>${r.p1}</td><td>${r.p2}</td><td>${r.p3}</td><td>${r.p4}</td>
+    <td><strong>${r.total}</strong>/40</td>
+    <td class="${accCls(r.acc)}">${r.acc}%</td>
+    <td><span class="badge ${bandCls(r.band)}">${r.band}</span></td>
+    <td>${r.prob}</td><td>${r.weak}</td><td>${r.notes||'—'}</td>
+    <td><button class="del-btn" onclick="delListening(${i})" title="Delete">✕</button></td>
+  </tr>`).join('');
+}
+
+// ─── READING ───
+function addReading() {
+  const p1=+document.getElementById('r-p1').value||0,
+        p2=+document.getElementById('r-p2').value||0,
+        p3=+document.getElementById('r-p3').value||0;
+  const total=p1+p2+p3, acc=Math.round(total/40*100), band=rBand(total);
+  DATA.reading.push({
+    date: document.getElementById('r-date').value||todayStr(),
+    mat: document.getElementById('r-mat').value||'—',
+    test: document.getElementById('r-test').value||'—',
+    p1,p2,p3,total,acc,band,
+    time: document.getElementById('r-time').value||'1 hour',
+    weak: document.getElementById('r-weak').value||'—',
+    notes: document.getElementById('r-notes').value||''
+  });
+  save(); renderReading();
+  ['r-mat','r-test','r-p1','r-p2','r-p3','r-time','r-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('r-weak').value='';
+}
+function delReading(i){DATA.reading.splice(i,1);save();renderReading();}
+function renderReading() {
+  const rows=DATA.reading;
+  renderStats('r-stats', rows, 'band');
+  document.getElementById('r-empty').style.display = rows.length?'none':'block';
+  document.getElementById('r-tbody').innerHTML = rows.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.date}</td><td>${r.mat}</td><td>${r.test}</td>
+    <td>${r.p1}</td><td>${r.p2}</td><td>${r.p3}</td>
+    <td><strong>${r.total}</strong>/40</td>
+    <td class="${accCls(r.acc)}">${r.acc}%</td>
+    <td><span class="badge ${bandCls(r.band)}">${r.band}</span></td>
+    <td>${r.time}</td><td>${r.weak}</td><td>${r.notes||'—'}</td>
+    <td><button class="del-btn" onclick="delReading(${i})" title="Delete">✕</button></td>
+  </tr>`).join('');
+}
+
+// ─── WRITING ───
+function addWriting() {
+  const t1=+document.getElementById('w-t1').value||0;
+  const t2=+document.getElementById('w-t2').value||0;
+  const task=document.getElementById('w-task').value;
+  let avg;
+  if(task==='Task 1') avg=t1;
+  else if(task==='Task 2') avg=t2;
+  else avg=Math.round((t1+(t2*2))/3*2)/2;
+  DATA.writing.push({
+    date: document.getElementById('w-date').value||todayStr(),
+    mat: document.getElementById('w-mat').value||'—',
+    task, t1, t2, avg,
+    time: document.getElementById('w-time').value||'—',
+    ta: document.getElementById('w-ta').value||'—',
+    cc: document.getElementById('w-cc').value||'—',
+    lr: document.getElementById('w-lr').value||'—',
+    gr: document.getElementById('w-gr').value||'—',
+    notes: document.getElementById('w-notes').value||''
+  });
+  save(); renderWriting();
+  ['w-mat','w-t1','w-t2','w-time','w-notes'].forEach(id=>document.getElementById(id).value='');
+}
+function delWriting(i){DATA.writing.splice(i,1);save();renderWriting();}
+function renderWriting() {
+  const rows=DATA.writing;
+  renderStats('w-stats', rows, 'avg');
+  document.getElementById('w-empty').style.display = rows.length?'none':'block';
+  document.getElementById('w-tbody').innerHTML = rows.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.date}</td><td>${r.mat}</td><td>${r.task}</td>
+    <td>${r.t1||'—'}</td><td>${r.t2||'—'}</td>
+    <td><span class="badge ${bandCls(r.avg)}">${r.avg}</span></td>
+    <td>${r.time}</td><td>${r.ta}</td><td>${r.cc}</td><td>${r.lr}</td><td>${r.gr}</td>
+    <td>${r.notes||'—'}</td>
+    <td><button class="del-btn" onclick="delWriting(${i})" title="Delete">✕</button></td>
+  </tr>`).join('');
+}
+
+// ─── SPEAKING ───
+function addSpeaking() {
+  const p1=+document.getElementById('s-p1').value||0;
+  const p2=+document.getElementById('s-p2').value||0;
+  const p3=+document.getElementById('s-p3').value||0;
+  const parts=[p1,p2,p3].filter(v=>v>0);
+  const avg=parts.length ? Math.round(parts.reduce((a,v)=>a+v,0)/parts.length*2)/2 : 0;
+  DATA.speaking.push({
+    date: document.getElementById('s-date').value||todayStr(),
+    type: document.getElementById('s-type').value,
+    topic: document.getElementById('s-topic').value||'—',
+    p1,p2,p3,avg,
+    flu: document.getElementById('s-flu').value||'—',
+    voc: document.getElementById('s-voc').value||'—',
+    grm: document.getElementById('s-grm').value||'—',
+    pro: document.getElementById('s-pro').value||'Good',
+    notes: document.getElementById('s-notes').value||''
+  });
+  save(); renderSpeaking();
+  ['s-topic','s-p1','s-p2','s-p3','s-notes'].forEach(id=>document.getElementById(id).value='');
+}
+function delSpeaking(i){DATA.speaking.splice(i,1);save();renderSpeaking();}
+function renderSpeaking() {
+  const rows=DATA.speaking;
+  renderStats('s-stats', rows, 'avg');
+  document.getElementById('s-empty').style.display = rows.length?'none':'block';
+  document.getElementById('s-tbody').innerHTML = rows.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.date}</td><td>${r.type}</td><td>${r.topic}</td>
+    <td>${r.p1||'—'}</td><td>${r.p2||'—'}</td><td>${r.p3||'—'}</td>
+    <td><span class="badge ${bandCls(r.avg)}">${r.avg}</span></td>
+    <td>${r.flu}</td><td>${r.voc}</td><td>${r.grm}</td><td>${r.pro}</td>
+    <td>${r.notes||'—'}</td>
+    <td><button class="del-btn" onclick="delSpeaking(${i})" title="Delete">✕</button></td>
+  </tr>`).join('');
+}
+
+// ─── DASHBOARD ───
+function renderDash() {
+  const mods = [
+    {key:'listening', label:'Listening', bk:'band', icon:'🎧', m:'listening'},
+    {key:'reading',   label:'Reading',   bk:'band', icon:'📖', m:'reading'},
+    {key:'writing',   label:'Writing',   bk:'avg',  icon:'✍️', m:'writing'},
+    {key:'speaking',  label:'Speaking',  bk:'avg',  icon:'🎙️', m:'speaking'},
+  ];
+  let overalls = [];
+  let cardsHtml = '';
+  mods.forEach(({key,label,bk,icon,m}) => {
+    const rows = DATA[key] || [];
+    const avg = rows.length ? (rows.reduce((a,r)=>a+(r[bk]||0),0)/rows.length).toFixed(1) : '—';
+    const best = rows.length ? Math.max(...rows.map(r=>r[bk]||0)) : '—';
+    if(avg!=='—') overalls.push(parseFloat(avg));
+    const pct = avg!=='—' ? Math.min(100,Math.round(parseFloat(avg)/9*100)) : 0;
+    cardsHtml += `<div class="dash-module-card" data-m="${m}">
+      <div class="dmcard-top">
+        <div class="dmcard-label">${label}</div>
+        <div class="dmcard-icon">${icon}</div>
+      </div>
+      <div class="dmcard-band">${avg}</div>
+      <div class="dmcard-meta">Best: ${best} &nbsp;·&nbsp; ${rows.length} sessions</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+
+  const ov = overalls.length ? (overalls.reduce((a,v)=>a+v,0)/overalls.length).toFixed(2) : '—';
+  const gap = ov!=='—' ? (8.5-parseFloat(ov)).toFixed(2) : '—';
+
+  let recent = [];
+  mods.forEach(({key,label,bk,m})=>{
+    if(DATA[key]) {
+      DATA[key].forEach((r,i)=>{
+        recent.push({label,m,date:r.date,band:r[bk]||0});
+      });
+    }
+  });
+  recent.sort((a,b)=>b.date.localeCompare(a.date));
+  const colors = {listening:getComputedStyle(document.documentElement).getPropertyValue('--teal').trim()||'#1D9E75', reading:'#2176c7', writing:'#5b4ab8', speaking:'#d85a30'};
+  const recentHtml = recent.slice(0,10).map(r=>`<div class="recent-item">
+    <div class="recent-dot" style="background:${colors[r.m]||'#888'}"></div>
+    <div class="recent-label">${r.label}</div>
+    <div class="recent-date">${r.date}</div>
+    <span class="badge ${bandCls(r.band)}">${r.band}</span>
+  </div>`).join('') || '<div style="color:#8a97a8;font-size:13px;padding:1rem 0">No activity yet. Start logging your tests!</div>';
+
+  document.getElementById('dash-content').innerHTML = `
+    <div class="overall-card">
+      <div class="overall-left">
+        <div class="label">Overall Average Band</div>
+        <div class="overall-band">${ov}</div>
+        <div class="overall-sub">across all completed modules</div>
+      </div>
+      <div class="target-pill">
+        <div class="t-label">Target</div>
+        <div class="t-val">9.0</div>
+        <div class="t-gap">${gap!=='—'?'Gap: '+gap:' '}</div>
+      </div>
+    </div>
+    <div class="dash-grid">${cardsHtml}</div>
+    <div class="recent-section">
+      <div class="section-title">Recent Activity</div>
+      ${recentHtml}
+    </div>`;
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+</script>
+</body>
+</html>

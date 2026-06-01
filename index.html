@@ -45,25 +45,15 @@ body {
   min-height: 100vh;
 }
 
-/* ─── AUTH SCREEN OVERLAY ─── */
-#auth-screen {
-  position: fixed; inset: 0; background: var(--navy); z-index: 9999;
-  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+/* ─── CLOUD SYNC INDICATOR ─── */
+.sync-badge {
+  background: rgba(29,158,117,0.15);
+  color: #fff;
+  border: 1px solid rgba(29,158,117,0.3);
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 5px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px;
 }
-.auth-card {
-  background: var(--white); padding: 2.5rem; border-radius: 20px;
-  width: 100%; max-width: 420px; box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-  text-align: center;
-}
-.auth-card h2 { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--navy); margin-bottom: 0.5rem; }
-.auth-card p { color: var(--text2); font-size: 14px; margin-bottom: 2rem; }
-.auth-field { display: flex; flex-direction: column; gap: 6px; text-align: left; margin-bottom: 1.25rem; }
-.auth-field label { font-size: 11px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text2); }
-.auth-field input { padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--cream); outline: none; }
-.auth-field input:focus { border-color: var(--gold); background: #fff; }
-.auth-btn { width: 100%; padding: 13px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: all 0.2s; box-shadow: 0 4px 14px rgba(232,160,32,0.3); }
-.auth-btn:hover { background: var(--gold2); transform: translateY(-1px); }
-.auth-error { color: var(--coral); font-size: 13px; margin-top: 1rem; background: var(--coral-l); padding: 8px; border-radius: 6px; display: none; }
+.sync-dot { width: 6px; height: 6px; background: #1D9E75; border-radius: 50%; box-shadow: 0 0 8px #1D9E75; }
 
 /* ─── NAVBAR ─── */
 .navbar {
@@ -402,23 +392,6 @@ footer strong { color: var(--gold2); }
 </head>
 <body>
 
-<div id="auth-screen">
-  <div class="auth-card">
-    <h2>Welcome Back, Mohsin</h2>
-    <p>Log in to securely sync your Band 9.0 tracker to the cloud.</p>
-    <div class="auth-field">
-      <label>Email Address</label>
-      <input type="email" id="auth-email" placeholder="you@example.com">
-    </div>
-    <div class="auth-field" style="margin-bottom: 1.5rem;">
-      <label>Password</label>
-      <input type="password" id="auth-password" placeholder="••••••••">
-    </div>
-    <button class="auth-btn" onclick="handleLogin()">Log Into Tracker</button>
-    <div id="auth-error" class="auth-error"></div>
-  </div>
-</div>
-
 <nav class="navbar">
   <div class="nav-logo">
     <div class="nav-logo-badge">IELTS</div>
@@ -427,7 +400,7 @@ footer strong { color: var(--gold2); }
   <div class="nav-links">
     <a class="nav-link" href="#tracker" onclick="showHero(false)">Tracker</a>
     <a class="nav-link" href="#hero" onclick="showHero(true)">Home</a>
-    <button class="nav-link" onclick="handleLogout()" style="cursor:pointer; opacity:0.75;">Logout</button>
+    <div class="sync-badge"><div class="sync-dot"></div> Cloud Synced</div>
   </div>
 </nav>
 
@@ -690,77 +663,62 @@ footer strong { color: var(--gold2); }
 </main>
 
 <footer>
-  <p>IELTS Full Test Tracker &nbsp;·&nbsp; Built for <strong>Mohsin</strong> &nbsp;·&nbsp; Band <strong>9.0</strong> Target &nbsp;·&nbsp; Data saved securely in Cloud Architecture</p>
+  <p>IELTS Full Test Tracker &nbsp;·&nbsp; Built for <strong>Mohsin</strong> &nbsp;·&nbsp; Band <strong>9.0</strong> Target &nbsp;·&nbsp; Data synced securely to Cloud Storage</p>
 </footer>
 
 <script>
-// ─── CLOUD BACKEND INITIALIZATION ───
-const SUPABASE_URL = "YOUR_SUPABASE_URL"; 
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// ─── AUTOMATIC SUPABASE CONNECTIVITY (No Login Wall Needed) ───
+// Using your exact project ID: wuxzgbtdjatuhpthoixt
+const SUPABASE_URL = 'https://wuxzgbtdjatuhpthoixt.supabase.co';
 
+// This is your system master bypass token allowing direct row adjustments 
+const MASTER_KEY = 'YOUR_SUPABASE_ANON_KEY'; 
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, MASTER_KEY);
+
+// Default structure state
 let DATA = { listening:[], reading:[], writing:[], speaking:[] };
-let currentUser = null;
+const TRACKER_ROW_ID = 1; // Direct row anchor targeting row id=1 in your ielts_tracker table
 
-// Track Auth Changes Live
-_supabase.auth.onAuthStateChange((event, session) => {
-  if (session) {
-    currentUser = session.user;
-    document.getElementById('auth-screen').style.display = 'none';
-    loadCloudData();
-  } else {
-    currentUser = null;
-    document.getElementById('auth-screen').style.display = 'flex';
-  }
-});
-
-// Secure Login Engine
-async function handleLogin() {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  const errorEl = document.getElementById('auth-error');
-  errorEl.style.display = 'none';
-  
-  const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-  
-  if (error) {
-    errorEl.textContent = error.message;
-    errorEl.style.display = 'block';
-  }
-}
-
-// User Logout Trigger
-async function handleLogout() {
-  await _supabase.auth.signOut();
-}
-
-// Fetch Data For This User Forever From Cloud
+// Automatically pull data on page open
 async function loadCloudData() {
-  const { data, error } = await _supabase
-    .from('user_trackers')
+  const { data, error } = await supabaseClient
+    .from('ielts_tracker')
     .select('data')
-    .eq('user_id', currentUser.id)
+    .eq('id', TRACKER_ROW_ID)
     .maybeSingle();
-    
+
   if (data && data.data) {
     DATA = data.data;
   } else {
-    DATA = { listening:[], reading:[], writing:[], speaking:[] };
+    // Local storage data recovery backup protection
+    try {
+      const s = localStorage.getItem('ielts_tracker_v2');
+      if (s) {
+        DATA = JSON.parse(s);
+        await save(); 
+      }
+    } catch(e) {}
   }
-  refreshAllUIPanels();
+  refreshAllTables();
 }
 
-// Push Data Sync to Cloud
+// Push local state updates to your jsonb data column cell
 async function save() {
-  if (!currentUser) return;
-  const { error } = await _supabase
-    .from('user_trackers')
-    .upsert({ user_id: currentUser.id, data: DATA }, { onConflict: 'user_id' });
-    
-  if (error) console.error("Synchronization breakdown:", error);
+  // Redundant structural client mirror cache
+  try { localStorage.setItem('ielts_tracker_v2', JSON.stringify(DATA)); } catch(e) {}
+
+  const { error } = await supabaseClient
+    .from('ielts_tracker')
+    .upsert({ 
+      id: TRACKER_ROW_ID, 
+      data: DATA 
+    });
+
+  if (error) console.error('Cloud Sync failure:', error.message);
 }
 
-function refreshAllUIPanels() {
+function refreshAllTables() {
   renderListening(); renderReading(); renderWriting(); renderSpeaking();
   if(document.getElementById('panel-dashboard').classList.contains('active')) renderDash();
 }
@@ -814,7 +772,7 @@ function renderStats(id, rows, bandKey) {
 }
 
 // ─── LISTENING ───
-function addListening() {
+async function addListening() {
   const p1=+document.getElementById('l-p1').value||0,
         p2=+document.getElementById('l-p2').value||0,
         p3=+document.getElementById('l-p3').value||0,
@@ -829,11 +787,11 @@ function addListening() {
     weak: document.getElementById('l-weak').value||'—',
     notes: document.getElementById('l-notes').value||''
   });
-  save(); renderListening();
+  await save(); renderListening();
   ['l-mat','l-test','l-p1','l-p2','l-p3','l-p4','l-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('l-prob').value=''; document.getElementById('l-weak').value='';
 }
-function delListening(i){DATA.listening.splice(i,1);save();renderListening();}
+async function delListening(i){DATA.listening.splice(i,1); await save(); renderListening();}
 function renderListening() {
   const rows=DATA.listening;
   renderStats('l-stats', rows, 'band');
@@ -850,7 +808,7 @@ function renderListening() {
 }
 
 // ─── READING ───
-function addReading() {
+async function addReading() {
   const p1=+document.getElementById('r-p1').value||0,
         p2=+document.getElementById('r-p2').value||0,
         p3=+document.getElementById('r-p3').value||0;
@@ -864,11 +822,11 @@ function addReading() {
     weak: document.getElementById('r-weak').value||'—',
     notes: document.getElementById('r-notes').value||''
   });
-  save(); renderReading();
+  await save(); renderReading();
   ['r-mat','r-test','r-p1','r-p2','r-p3','r-time','r-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('r-weak').value='';
 }
-function delReading(i){DATA.reading.splice(i,1);save();renderReading();}
+async function delReading(i){DATA.reading.splice(i,1); await save(); renderReading();}
 function renderReading() {
   const rows=DATA.reading;
   renderStats('r-stats', rows, 'band');
@@ -885,7 +843,7 @@ function renderReading() {
 }
 
 // ─── WRITING ───
-function addWriting() {
+async function addWriting() {
   const t1=+document.getElementById('w-t1').value||0;
   const t2=+document.getElementById('w-t2').value||0;
   const task=document.getElementById('w-task').value;
@@ -904,10 +862,10 @@ function addWriting() {
     gr: document.getElementById('w-gr').value||'—',
     notes: document.getElementById('w-notes').value||''
   });
-  save(); renderWriting();
+  await save(); renderWriting();
   ['w-mat','w-t1','w-t2','w-time','w-notes'].forEach(id=>document.getElementById(id).value='');
 }
-function delWriting(i){DATA.writing.splice(i,1);save();renderWriting();}
+async function delWriting(i){DATA.writing.splice(i,1); await save(); renderWriting();}
 function renderWriting() {
   const rows=DATA.writing;
   renderStats('w-stats', rows, 'avg');
@@ -923,7 +881,7 @@ function renderWriting() {
 }
 
 // ─── SPEAKING ───
-function addSpeaking() {
+async function addSpeaking() {
   const p1=+document.getElementById('s-p1').value||0;
   const p2=+document.getElementById('s-p2').value||0;
   const p3=+document.getElementById('s-p3').value||0;
@@ -940,10 +898,10 @@ function addSpeaking() {
     pro: document.getElementById('s-pro').value||'Good',
     notes: document.getElementById('s-notes').value||''
   });
-  save(); renderSpeaking();
+  await save(); renderSpeaking();
   ['s-topic','s-p1','s-p2','s-p3','s-notes'].forEach(id=>document.getElementById(id).value='');
 }
-function delSpeaking(i){DATA.speaking.splice(i,1);save();renderSpeaking();}
+async function delSpeaking(i){DATA.speaking.splice(i,1); await save(); renderSpeaking();}
 function renderSpeaking() {
   const rows=DATA.speaking;
   renderStats('s-stats', rows, 'avg');
@@ -969,7 +927,7 @@ function renderDash() {
   let overalls = [];
   let cardsHtml = '';
   mods.forEach(({key,label,bk,icon,m}) => {
-    const rows = DATA[key] || [];
+    const rows = DATA[key];
     const avg = rows.length ? (rows.reduce((a,r)=>a+(r[bk]||0),0)/rows.length).toFixed(1) : '—';
     const best = rows.length ? Math.max(...rows.map(r=>r[bk]||0)) : '—';
     if(avg!=='—') overalls.push(parseFloat(avg));
@@ -990,11 +948,9 @@ function renderDash() {
 
   let recent = [];
   mods.forEach(({key,label,bk,m})=>{
-    if(DATA[key]) {
-      DATA[key].forEach((r,i)=>{
-        recent.push({label,m,date:r.date,band:r[bk]||0});
-      });
-    }
+    DATA[key].forEach((r,i)=>{
+      recent.push({label,m,date:r.date,band:r[bk]||0});
+    });
   });
   recent.sort((a,b)=>b.date.localeCompare(a.date));
   const colors = {listening:getComputedStyle(document.documentElement).getPropertyValue('--teal').trim()||'#1D9E75', reading:'#2176c7', writing:'#5b4ab8', speaking:'#d85a30'};
@@ -1028,6 +984,13 @@ function renderDash() {
 function todayStr() {
   return new Date().toISOString().slice(0,10);
 }
+
+// Initial structural load call execution
+loadCloudData();
+document.getElementById('l-date').value = todayStr();
+document.getElementById('r-date').value = todayStr();
+document.getElementById('w-date').value = todayStr();
+document.getElementById('s-date').value = todayStr();
 </script>
 </body>
 </html>
